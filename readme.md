@@ -518,8 +518,31 @@ La fonction ```mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_in
 
 ## 4.2. ServoMoteur
 Pour la partie servomoteur nous sommes partie d'un projet vide et nous avons configuré les pins pour diriger le servomoteur.
+Pour configurer le pin, nous l'avons mis en TIMER PWM et l'IDE a généré automatiquement le code de configuration.
 Nous n'avons pas eu le temps d'incorporer la partie servomoteur à la partie MQTT.
 
+Voici la fonction permettant de bouger le moteur, d'abord on initialise le pin en timer.
+Puis, je configure le timer.
+Enfin, je lance le timer à la position souhaitée (en fonction de la valeur de l'humidité).S
+```
+void change_motor(int value)
+{
+  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+  TIM_OC_InitTypeDef sConfig;
+  sConfig.OCMode = TIM_OCMODE_PWM1;
+  sConfig.Pulse = value;
+  sConfig.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfig.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfig.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfig.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfig.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfig, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+}
+```
 
 # 5. Annexe
 ## 5.1. MQTT Server Windows
