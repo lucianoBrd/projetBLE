@@ -14,6 +14,10 @@ Environnements intelligents et communicants
     3. PubSubClient MQTT - Wifi
     4. TFT_eSPI Ecran
 4. STM32
+    1. MQTT
+        1. Mise en place
+        2. Connection au brooker
+    2. ServoMoteur
 5. Annexe
     1. MQTT Server Windows
     2. ESP32 TTGO - T-display
@@ -439,7 +443,8 @@ On créer un ID unique pour la carte ESP32 lors de la connection.
     - *onResult* de la class *MyAdvertisedDeviceCallbacks* pour afficher les valeurs reçu par bluetooth
 
 # 4. STM32
-## 4.1. Mise en place
+## 4.1. MQTT
+### 4.1.1. Mise en place
 * Pour la réalisation du projet pour la carte STM32 il faut se baser sur l'exemple Ethernet disponible dans l'ide. Par la suite, il rajouter un fichier "mqtt.c" contenant les fonctions dont nous aurons besoin. 
 
 * L'exemple ethernet permet d'initialiser les connexions de bases. Nous avons opter de faire la routine mqtt dans le thread "Start_Thread". 
@@ -470,7 +475,7 @@ On créer un ID unique pour la carte ESP32 lors de la connection.
 }
 ```
 
-## 4.2. Connection au brooker
+### 4.1.2. Connection au brooker
 * La connection au brooker se fait avec la fonction ```mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port, mqtt_connection_cb_t cb, void *arg,
                     const struct mqtt_connect_client_info_t *client_info)```
 Cette fonction prend en parmètre un client mqtt, les informations de connection et une fonction de callback.
@@ -509,7 +514,9 @@ mqtt_subscribe(client, "topic/temp", 0, mqtt_sub_request_cb, "temp");
 
 La fonction ```mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);``` permet de définir les fonctions de callback quand nous recevons un publish de la part du brooker.
 
-  
+## 4.2. ServoMoteur
+Pour la partie servomoteur nous sommes partie d'un projet vide et nous avons configuré les pins pour diriger le servomoteur.
+Nous n'avons pas eu le temps d'incorporer la partie servomoteur à la partie MQTT.
 
 
 # 5. Annexe
