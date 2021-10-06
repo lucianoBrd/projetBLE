@@ -38,6 +38,8 @@ Créer un mini-système domotique faisant intervenir différents capteurs, actio
 # 3. ESP32 TTGO - T-display
 
 Afin de programmer le microcontrôleur ESP32, nous avons utilisé ```VS Code``` avec l'extension ```PlatformIO IDE```. De plus, nous utilisons le framework ```arduino```.
+Voici le lien de la video montrant la ESP32 en action :
+https://youtu.be/-RMJHuE7Nd0
 
 ## 3.1. Configuration du projet
 
