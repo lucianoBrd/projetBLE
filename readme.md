@@ -447,10 +447,10 @@ On créer un ID unique pour la carte ESP32 lors de la connection.
 # 4. STM32
 ## 4.1. MQTT
 ### 4.1.1. Mise en place
-* Pour la réalisation du projet pour la carte STM32 il faut se baser sur l'exemple Ethernet disponible dans l'ide. Par la suite, il rajouter un fichier "mqtt.c" contenant les fonctions dont nous aurons besoin. 
+* Pour la réalisation du projet pour la carte STM32 il faut se baser sur l'exemple Ethernet disponible dans l'ide. Par la suite, nous avons rajouter un fichier "mqtt.c" contenant les fonctions dont nous aurons besoin.  
 
 * L'exemple ethernet permet d'initialiser les connexions de bases. Nous avons opter de faire la routine mqtt dans le thread "Start_Thread". 
-  - la première étape consiste à **initialiser un client mqtt** : 
+  - **la première étape consiste à initialiser un client mqtt** : 
   ```
   mqtt_client_t *client = mqtt_client_new();
   ```
@@ -478,10 +478,17 @@ On créer un ID unique pour la carte ESP32 lors de la connection.
 ```
 
 ### 4.1.2. Connection au brooker
-* La connection au brooker se fait avec la fonction ```mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port, mqtt_connection_cb_t cb, void *arg,
+**La deuxième étape consiste à se connecter au brooker MQTT.**  Elle se fait avec la fonction ```mqtt_client_connect(mqtt_client_t *client, const ip_addr_t *ip_addr, u16_t port, mqtt_connection_cb_t cb, void *arg,
                     const struct mqtt_connect_client_info_t *client_info)```
-Cette fonction prend en parmètre un client mqtt, les informations de connection et une fonction de callback.
-* La fonction de callback ```mqtt_connection_cb``` permet d'effectuer une routine si la connection réussie ou échoue. 
+Cette fonction prend en paramètre :
+- un client MQTT
+- l'adresse IP du brooker
+- le port de connection
+- une fonction de callback
+- un paramètre à passer à la fonction de callback
+- des informations sur le client
+
+La fonction de callback, ```mqtt_connection_cb```, permet d'effectuer une routine si la connection réussie ou échoue. 
 ```
 static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection_status_t status)
 {
@@ -499,8 +506,6 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
     if(err != ERR_OK)  {printf("Erreur abonnement au Topic Temperature");}
     if(err1 != ERR_OK) {printf("Erreur abonnement au Topic Humidite");}
     if(err2 != ERR_OK) {printf("Erreur abonnement au Topic Batterie");}
-   // struct _LCD_LOG_line ll ;
- //   LCD_UsrLog(LCD_COLOR_LIGHTRED,"TEST");
   } else {
     printf("mqtt_connection_cb: Disconnected, reason: %d\n", status);
 
@@ -509,12 +514,94 @@ static void mqtt_connection_cb(mqtt_client_t *client, void *arg, mqtt_connection
   }
 }
 ```
-La fonction ...........................................
+Si la connection au brooker réussie, nous affichons un message et appelons la fonction qui permet de s'abonner à un topic. 
+### 4.1.3. Abonnnement à un topic
+**La troisième étape consiste à s'abonner à un topic.** Nous utilisons pour cela la fonction ```mqtt_subscribe``` qui prend en argument  le client MQTT, le nom du topic, le niveau de QoS, une fonction de callback ainsi qu'un paramètre qui lui sera fournit.
 ```
-mqtt_subscribe(client, "topic/temp", 0, mqtt_sub_request_cb, "temp");
+mqtt_subscribe(client, topic, QoS, mqtt_sub_request_cb, arg);
 ```
 
-La fonction ```mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);``` permet de définir les fonctions de callback quand nous recevons un publish de la part du brooker.
+* La fonction de callback ```mqtt_sub_request_cb``` est appelée après la tentative d'abonnement. Elle permet de programmer des routines à exécuter en fonction du résultat de la tentative. Dans notre cas, nous affichons un message :
+```
+static void mqtt_sub_request_cb(void *arg, err_t result)
+{
+  if (result == ERR_OK){
+      printf("Abonnement reussi au Topic : %s\n", arg);
+  }else{
+      printf("Abonnement echoue au Topic : %s\n", arg);
+      }
+}
+```
+
+### 4.1.4. Recevoir des messages du brooker
+**La quatrième étape consiste à définir les routines à exécuter lors de la publication de messages sur nos topics.** 
+* La fonction ```mqtt_set_inpub_callback(client, mqtt_incoming_publish_cb, mqtt_incoming_data_cb, arg);``` permet de définir les fonctions de callback quand nous recevons un publish de la part du brooker. 
+
+Elle prend en argument : 
+- le client MQTT
+- une fonction callback pour gérer les publications entrantes en fonction de leur topic
+- une fonction callback qui permet de gérer le contenu des publications
+```
+static void mqtt_incoming_publish_cb(void *arg, const char *topic, u32_t tot_len)
+{
+//  printf("Incoming publish at topic %s with total length %u\n", topic, (unsigned int)tot_len);
+  /* Decode topic string into a user defined reference */
+  if(strcmp(topic, "topic/temp") == 0) {
+    inpub_id = 0;}
+  if(strcmp(topic, "topic/hum") == 0) {
+      inpub_id = 1;}
+  if(strcmp(topic, "topic/bat") == 0) {
+      inpub_id = 2;}
+}
+```
+Dans la callback ``` mqtt_incoming_publish_cb ``` nous définissons un id ``` inpub_id ``` en fonction du topic de la publication entrante. Cet id sera utilisé dans la fonction de callback ``` mqtt_incoming_data_cb ```.
+```
+static void mqtt_incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
+{
+//  printf("Incoming publish payload with length %d, flags %u\n", len, (unsigned int)flags);
+  if(flags & MQTT_DATA_FLAG_LAST) {
+    /* Last fragment of payload received (or whole part if payload fits receive buffer
+       See MQTT_VAR_HEADER_BUFFER_LEN)  */
+
+    /* Call function or do action depending on reference, in this case inpub_id */
+    if(inpub_id == 0) {
+      /* Don't trust the publisher, check zero termination */
+    	if (len != 0 ){printf("Temp : ");
+    	for (int i=0; i<len;i++){
+    		printf("%c", (const char)data[i]);
+    	}
+    	printf("\n");}
+    } else if(inpub_id == 1) {
+    	if (len != 0 ){
+            printf("Humidite : ");
+    	    	for (int i=0; i<len;i++){
+    	    		printf("%c", (const char)data[i]);
+    	    	}
+    	    	printf("\n");}
+    }
+    else if(inpub_id == 2) {
+    	if (len != 0 ){
+            printf("Batterie : ");
+    	    for (int i=0; i<len;i++){
+    	    	printf("%c", (const char)data[i]);
+    	    }
+    	    printf("\n");
+        }
+        } 
+        else {
+            printf("Topic inconnu \n");
+                }
+  } else {
+    /* Handle fragmented payload, store in buffer, write to file or whatever */
+  }
+}
+
+```
+Dans cette fonction, en fonction du topic, donc ```input_id```, nous traitons la donnée, ```data```, et l'affichons sur l'écran de la carte.
+
+
+
+
 
 ## 4.2. ServoMoteur
 Pour la partie servomoteur nous sommes partie d'un projet vide et nous avons configuré les pins pour diriger le servomoteur.
