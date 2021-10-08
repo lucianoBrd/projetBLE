@@ -22,6 +22,12 @@ Environnements intelligents et communicants
     1. MQTT Server Windows
     2. ESP32 TTGO - T-display
 
+# Videos
+Voici le lien de la vidéo du projet complet :
+- https://youtu.be/0sxI_2qFv7I
+Voici le lien de la video montrant la ESP32 en action :
+- https://youtu.be/-RMJHuE7Nd0
+
 # 1. Objectif du projet
 
 Créer un mini-système domotique faisant intervenir différents capteurs, actionneurs et systèmes embarqués :
@@ -39,7 +45,7 @@ Créer un mini-système domotique faisant intervenir différents capteurs, actio
 
 Afin de programmer le microcontrôleur ESP32, nous avons utilisé ```VS Code``` avec l'extension ```PlatformIO IDE```. De plus, nous utilisons le framework ```arduino```.
 Voici le lien de la video montrant la ESP32 en action :
-https://youtu.be/-RMJHuE7Nd0
+- https://youtu.be/-RMJHuE7Nd0
 
 ## 3.1. Configuration du projet
 
