@@ -982,3 +982,31 @@ void loop()
   pBLEScan->clearResults(); // delete results fromBLEScan buffer to release memory
 }
 ```
+## 5.3. STM32 MQTT - Publier des messages 
+Dans notre projet nous n'avions pas à publier des messages depuis la carte STM32.
+Nous ajoutons quand même ci-dessous le code pour publier un message sur un topic depuis la carte STM32, pour ceux et celles qui voudraient le faire.
+
+```
+void example_publish(mqtt_client_t *client, void *arg)
+{
+  const char *pub_payload= "Ce message est à publier";*
+  const char *topic="monTopic"
+  err_t err;
+  u8_t qos = 0; /* 0 1 or 2, see MQTT specification */
+  u8_t retain = 0; /* No don't retain such crappy payload... */
+  err = mqtt_publish(client, topic, pub_payload, strlen(pub_payload), qos, retain, mqtt_pub_request_cb, arg);
+  if(err != ERR_OK) {
+    printf("Publish err: %d\n", err);
+  }
+}
+
+/* Called when publish is complete either with sucess or failure */
+static void mqtt_pub_request_cb(void *arg, err_t result)
+{
+  if(result != ERR_OK) {
+    printf("Publish result: %d\n", result);
+  }
+}
+
+
+```
